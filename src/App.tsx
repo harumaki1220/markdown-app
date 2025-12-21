@@ -1,4 +1,5 @@
 import { invoke } from '@tauri-apps/api/core';
+import { save } from '@tauri-apps/plugin-dialog';
 import { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -9,8 +10,16 @@ function App() {
 
   const handleSave = async () => {
     try {
-      const fileName = 'test.md';
-      await invoke('save_file', { path: fileName, contents: markdown });
+      const filePath = await save({
+        filters: [
+          {
+            name: 'Markdown',
+            extensions: ['md'],
+          },
+        ],
+      });
+      if (!filePath) return;
+      await invoke('save_file', { path: filePath, contents: markdown });
       alert('保存しました');
     } catch (e) {
       console.error(e);
