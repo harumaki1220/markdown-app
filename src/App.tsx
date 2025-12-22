@@ -1,5 +1,5 @@
 import { invoke } from '@tauri-apps/api/core';
-import { save } from '@tauri-apps/plugin-dialog';
+import { open, save } from '@tauri-apps/plugin-dialog';
 import { useEffect, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -26,6 +26,25 @@ function App() {
       alert('保存に失敗しました: ' + e);
     }
   };
+  const handleOpen = async () => {
+    try {
+      const filePath = await open({
+        multiple: false,
+        filters: [
+          {
+            name: 'Markdown',
+            extensions: ['md'],
+          },
+        ],
+      });
+      if (!filePath) return;
+      const content = await invoke<string>('read_file', { path: filePath });
+      setMarkdown(content);
+    } catch (e) {
+      console.error(e);
+      alert('ファイルの読み込みに失敗しました: ' + e);
+    }
+  };
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -44,6 +63,12 @@ function App() {
     <div className="flex h-screen flex-col bg-gray-900 text-white">
       {/* ヘッダー */}
       <div className="flex items-center justify-end border-b border-gray-700 bg-gray-800 p-2">
+        <button
+          onClick={handleOpen}
+          className="bg-gray-600px-4 mr-2 cursor-pointer rounded py-1.5 text-sm font-bold text-white transition-colors hover:bg-gray-500"
+        >
+          開く（Open）
+        </button>
         <button
           onClick={handleSave}
           className="cursor-pointer rounded bg-blue-600 px-4 py-1.5 text-sm font-bold text-white transition-colors hover:bg-blue-500"
