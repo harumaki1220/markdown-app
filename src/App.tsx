@@ -51,13 +51,16 @@ function App() {
       if ((e.ctrlKey || e.metaKey) && e.key === 's') {
         e.preventDefault();
         handleSave();
+      } else if ((e.ctrlKey || e.metaKey) && e.key === 'o') {
+        e.preventDefault();
+        handleOpen();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [handleSave]);
+  }, [handleSave, handleOpen]);
 
   return (
     <div className="flex h-screen flex-col bg-gray-900 text-white">
