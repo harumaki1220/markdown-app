@@ -1,6 +1,6 @@
 import { invoke } from '@tauri-apps/api/core';
-import { open, save } from '@tauri-apps/plugin-dialog';
-import { useEffect, useState } from 'react';
+import { ask, open, save } from '@tauri-apps/plugin-dialog';
+import { useCallback, useEffect, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import './App.css';
@@ -8,7 +8,7 @@ import './App.css';
 function App() {
   const [markdown, setMarkdown] = useState<string>('');
 
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
     try {
       const filePath = await save({
         filters: [
@@ -25,8 +25,9 @@ function App() {
       console.error(e);
       alert('保存に失敗しました: ' + e);
     }
-  };
-  const handleOpen = async () => {
+  }, [markdown]);
+
+  const handleOpen = useCallback(async () => {
     try {
       const filePath = await open({
         multiple: false,
@@ -44,7 +45,20 @@ function App() {
       console.error(e);
       alert('ファイルの読み込みに失敗しました: ' + e);
     }
-  };
+  }, []);
+
+  const handleNew = useCallback(async () => {
+    if (markdown.length > 0) {
+      const answer = await ask('内容は破棄されます。新規作成しますか？', {
+        title: '確認',
+        kind: 'warning',
+        okLabel: '新規作成',
+        cancelLabel: 'キャンセル',
+      });
+      if (!answer) return;
+    }
+    setMarkdown('');
+  }, [markdown]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -54,21 +68,30 @@ function App() {
       } else if ((e.ctrlKey || e.metaKey) && e.key === 'o') {
         e.preventDefault();
         handleOpen();
+      } else if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
+        e.preventDefault();
+        handleNew();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [handleSave, handleOpen]);
+  }, [handleSave, handleOpen, handleNew]);
 
   return (
     <div className="flex h-screen flex-col bg-gray-900 text-white">
       {/* ヘッダー */}
       <div className="flex items-center justify-end border-b border-gray-700 bg-gray-800 p-2">
         <button
+          onClick={handleNew}
+          className="mr-2 cursor-pointer rounded bg-green-600 px-4 py-1.5 text-sm font-bold text-white transition-colors hover:bg-green-500"
+        >
+          新規（New）
+        </button>
+        <button
           onClick={handleOpen}
-          className="bg-gray-600px-4 mr-2 cursor-pointer rounded py-1.5 text-sm font-bold text-white transition-colors hover:bg-gray-500"
+          className="mr-2 cursor-pointer rounded bg-gray-600 px-4 py-1.5 text-sm font-bold text-white transition-colors hover:bg-gray-500"
         >
           開く（Open）
         </button>
